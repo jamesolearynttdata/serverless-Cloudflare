@@ -21,7 +21,7 @@ functions:
     script: helloWorld # there must be a file called helloWorld.js
     events:
       - http:
-          url: example.com/hello/*
+          url: quiet-wood-6352.ditsl.workers.dev/*
           method: GET
           headers:
             foo: bar
