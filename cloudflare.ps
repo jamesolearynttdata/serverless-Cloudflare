@@ -1,0 +1,29 @@
+# Needed to talk to Cloudflare and by default Powershell uses a now-obsolete version of TLS (1.0?)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# We need these environment variables for the serverless step
+[Environment]::SetEnvironmentVariable("CLOUDFLARE_AUTH_KEY", $args[0], "Process") # API key - get it from key vault
+[Environment]::SetEnvironmentVariable("CLOUDFLARE_AUTH_EMAIL", $args[1], "Process") # Cloudflare email address for the API key - get it from key vault
+
+# https://github.com/serverless/serverless
+Write-Host "Deploying YAML using serverless NPM tool"
+serverless deploy
+
+$headers = @{}
+$headers.Add("X-Auth-Key", $args[0]) # API key - get it from key vault
+$headers.Add("X-Auth-Email", $args[1]) # Cloudflare email address for the API key - get it from key vault
+
+Write-Host "Getting list of all the Cloudflare Worker filters"
+
+# Find and delete the filter I am required to add as part of the YML file
+$filters = Invoke-RestMethod -Method Get -Headers $headers -ContentType 'application/json' -Uri https://api.cloudflare.com/client/v4/zones/<zone id>/workers/filters
+
+foreach ($filter in $filters.result) {
+    if ($filter.pattern -eq "yml.mycats.com/deleteme/*") {
+        $id = $filter.id
+        Write-Host "Found the dummy filter. Deleting $id"
+        Invoke-RestMethod -Method Delete -Headers $headers -ContentType 'application/json' -Uri "https://api.cloudflare.com/client/v4/zones/<zone id>/workers/filters/$id"
+    }
+}
+
+Write-Host "Deploy script complete"
