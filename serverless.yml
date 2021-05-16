@@ -1,0 +1,28 @@
+service: worker1
+
+frameworkVersion: '2'
+
+provider:
+  name: cloudflare
+  config:
+    accountId: 777cfc157f22e4cc6e970e6c49de1b09
+    zoneId: daaf05d39c4dc10585787671600e0a66
+    workers:
+      hello:
+        routes:
+          - quiet-wood-6352.ditsl.workers.dev/*
+
+plugins:
+  - serverless-cloudflare-workers
+
+functions:
+  hello:
+    name: hello
+    script: helloWorld # there must be a file called helloWorld.js
+    events:
+      - http:
+          url: example.com/hello/*
+          method: GET
+          headers:
+            foo: bar
+            x-client-data: value
